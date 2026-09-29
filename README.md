@@ -75,7 +75,7 @@ python -m website_ci_checks --url URL --checks a,b,c [--fail-on any|none|a,b] [-
 Real run on 2026-09-29 against my own site, all six checks, tools run from source. The run took about 40 seconds and exited `0`:
 
 ```
-$ python -m website_ci_checks --url https://marvin.demarkstudio.ca --checks security-headers,robots,redirects,html-lint,sitemap,og-card --local-src C:\Users\marvin --sarif-dir sarif-out
+$ python -m website_ci_checks --url https://marvin.demarkstudio.ca --checks security-headers,robots,redirects,html-lint,sitemap,og-card --local-src .. --sarif-dir sarif-out
 ## Website checks: https://marvin.demarkstudio.ca
 
 | Check | Status | Exit code | Duration |
