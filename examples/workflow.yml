@@ -1,0 +1,25 @@
+# Example: check a live site on every push, weekly, and on demand.
+# Copy this file to .github/workflows/ in your repository.
+name: Website checks
+
+on:
+  push:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write   # only needed because sarif is 'true' below
+
+jobs:
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dreadmoreeee/website-ci-checks@main
+        with:
+          url: https://marvin.demarkstudio.ca
+          checks: all
+          fail-on: any
+          sarif: "true"

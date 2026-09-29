@@ -1,0 +1,19 @@
+# Copy to .github/workflows/website.yml in your own repository.
+name: Website checks
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dreadmoreeee/website-ci-checks@main
+        with:
+          url: https://example.com
+          checks: security-headers,robots,redirects
+          fail-on: security-headers,redirects

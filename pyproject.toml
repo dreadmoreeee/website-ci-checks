@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "website-ci-checks"
+version = "0.1.0"
+description = "Run a suite of website checks (headers, robots.txt, redirects, HTML, sitemap, share cards) in CI and get one job summary."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Marvin Palencia"}]
+dependencies = []
+
+[project.scripts]
+website-ci-checks = "website_ci_checks.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/dreadmoreeee/website-ci-checks"
+
+[tool.setuptools]
+packages = ["website_ci_checks"]

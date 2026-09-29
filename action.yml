@@ -1,0 +1,72 @@
+name: Website CI checks
+description: Run security headers, robots.txt, redirects, HTML lint, sitemap and share-card checks against a site and get one job summary.
+author: Marvin Palencia
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  url:
+    description: Site to check, for example https://example.com
+    required: true
+  checks:
+    description: "Comma list of checks: security-headers, robots, redirects, html-lint, sitemap, og-card, or all"
+    default: all
+  fail-on:
+    description: "Which failures fail the job: any, none, or a comma list of checks"
+    default: any
+  sarif:
+    description: "Set to 'true' to upload the html-lint SARIF to code scanning (needs security-events: write)"
+    default: "false"
+  python-version:
+    description: Python version to run the checks with
+    default: "3.12"
+  tools-ref:
+    description: Branch, tag or commit of the tool repositories to install
+    default: main
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install the selected tools
+      shell: bash
+      env:
+        CHECKS: ${{ inputs.checks }}
+        TOOLS_REF: ${{ inputs.tools-ref }}
+      run: |
+        python -m pip install --upgrade pip
+        pkgs=()
+        add() { pkgs+=("git+https://github.com/dreadmoreeee/$1@${TOOLS_REF}"); }
+        want() { [ "$CHECKS" = "all" ] || [ -z "$CHECKS" ] || case ",${CHECKS// /}," in *",$1,"*) true ;; *) false ;; esac; }
+        want security-headers && add security-headers-audit
+        want robots && add robots9309
+        want redirects && add redirect-checker
+        want html-lint && add html-lint
+        want sitemap && add sitemap-diff
+        want og-card && add og-card-check
+        if [ "${#pkgs[@]}" -gt 0 ]; then python -m pip install "${pkgs[@]}"; fi
+        python -m pip install "${{ github.action_path }}"
+
+    - name: Run the checks
+      shell: bash
+      env:
+        PYTHONUTF8: "1"
+        SITE_URL: ${{ inputs.url }}
+        CHECKS: ${{ inputs.checks }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        SARIF: ${{ inputs.sarif }}
+      run: |
+        args=(--url "$SITE_URL" --checks "$CHECKS" --fail-on "$FAIL_ON")
+        if [ "$SARIF" = "true" ]; then args+=(--sarif-dir "$RUNNER_TEMP/website-ci-checks-sarif"); fi
+        python -m website_ci_checks "${args[@]}"
+
+    - name: Upload html-lint SARIF
+      if: ${{ always() && inputs.sarif == 'true' && (inputs.checks == 'all' || contains(inputs.checks, 'html-lint')) && hashFiles(format('{0}/website-ci-checks-sarif/html-lint.sarif', runner.temp)) != '' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ runner.temp }}/website-ci-checks-sarif/html-lint.sarif
+        category: website-ci-checks-html-lint
